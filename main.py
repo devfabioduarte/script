@@ -103,3 +103,7 @@ conn.close()
 # for chars in characters:
 #     cur.execute("""
 #             INSERT INTO charac """)""
+
+"""
+testando
+"""
