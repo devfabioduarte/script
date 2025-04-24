@@ -1,7 +1,7 @@
 from connect import conn #importa a conexao
 from load_data import load_json_data #importa os dados em dicionário
 
-character, episodes, locations = load_json_data
+characters, episodes, locations = load_json_data
 
 cur = conn.cursor() #faz um cursor, pra poder mexer no json
 
