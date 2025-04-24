@@ -116,16 +116,3 @@ for chars in characters:
 conn.commit()
 cur.close()
 conn.close()
-
-        
-    
-
-
-
-# for chars in characters:
-#     cur.execute("""
-#             INSERT INTO charac """)""
-
-"""
-testando
-"""
