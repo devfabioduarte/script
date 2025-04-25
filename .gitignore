@@ -1,16 +1,9 @@
-# Ambiente virtual
+# Ambiente virtual Python
 venv/
 .env/
 
-# Arquivos do Python
+# Bytecode do Python
 __pycache__/
 *.pyc
 *.pyo
-
-# Configurações do IDE
-.vscode/
-.idea/
-
-# Arquivos de sistema
-.DS_Store  (Mac)
-Thumbs.db  (Windows)
+*.pyd
