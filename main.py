@@ -1,66 +1,42 @@
 from connect import conn #importa a conexao
-import json
+from load_data import load_json_data #importa os dados em dicionário
+
+characters, episodes, locations = load_json_data()
 
 cur = conn.cursor() #faz um cursor, pra poder mexer no json
 
-with open("json/allCharsUpdated.json", "r", encoding="utf-8") as file: #lê os arquivos no json
-        characters = json.load(file)
-
-with open("json/allEpisodesUpdated.json", "r", encoding='utf-8') as file:
-        episodes = json.load(file)
-
-# Cria tabela de characters
-cur.execute("""CREATE TABLE IF NOT EXISTS characters( 
-    id INTEGER PRIMARY KEY,
-    name TEXT,
-    status TEXT,
-    species TEXT,
-    type TEXT,
-    gender TEXT,
-    origin_name TEXT,
-    origin_url TEXT,
-    location_name TEXT,
-    location_url TEXT,
-    image TEXT,
-    url TEXT
-)
-        """
-)
-
-# adiciona na tabela as informações do character
-for chars in characters:
-    cur.execute("""
-        INSERT INTO characters (
-            id, name, status, species, type, gender,
-            origin_name, origin_url, location_name, location_url,
-            image, url
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ON CONFLICT (id) DO NOTHING
-    """, (
-        chars["id"],
-        chars["name"],
-        chars["status"],
-        chars["species"],
-        chars["type"],
-        chars["gender"],
-        chars["origin"]["name"],
-        chars["origin"]["url"],
-        chars["location"]["name"],
-        chars["location"]["url"],
-        chars["image"],
-        chars["url"],
-    ))
-
-# cria a tabela episodes
-cur.execute("""CREATE TABLE IF NOT EXISTS episodes(
+#cria a tabela locations
+cur.execute("""CREATE TABLE IF NOT EXISTS locations(
             id INTEGER PRIMARY KEY,
-            name TEXT,
-            air_date TEXT,
-            episode TEXT,
-            url TEXT)
+            name VARCHAR(100),
+            type VARCHAR(100),
+            dimension VARCHAR(100),
+            url VARCHAR(255))
             """)
 
-#adiciona os episodios na tabela
+#adiciona dados na tabela locations
+for loc in locations:
+    cur.execute("""INSERT INTO locations(id, name, type, dimension, url)
+                VALUES(%s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """, (
+                      loc["id"],
+                      loc["name"],
+                      loc["type"],
+                      loc["dimension"],
+                      loc["url"],
+                ))
+
+#cria a tabela episodes
+cur.execute("""CREATE TABLE IF NOT EXISTS episodes(
+            id INTEGER PRIMARY KEY,
+            name VARCHAR(100),
+            air_date VARCHAR(50),
+            episode VARCHAR(20),
+            url VARCHAR(255))
+            """)
+
+#adiciona os dados na tabela episodes
 for ep in episodes:
        cur.execute("""
             INSERT INTO episodes (
@@ -74,36 +50,67 @@ for ep in episodes:
                     ep["air_date"],
                     ep["episode"],
                     ep["url"],
-                    ))
+                ))
+
+#cria tabela de characters
+cur.execute("""CREATE TABLE IF NOT EXISTS characters( 
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(100),
+    status VARCHAR(20),
+    species VARCHAR(50),
+    type VARCHAR(50),
+    gender VARCHAR(20),
+    origin_id INTEGER REFERENCES locations(id),
+    location_id INTEGER REFERENCES locations(id),
+    image VARCHAR(255),
+    url VARCHAR(255)
+)
+        """
+)
 
 #cria uma tabela relacional entre characters e episodes
-cur.execute("""CREATE TABLE IF NOT EXISTS characters_episodes(
+cur.execute("""CREATE TABLE IF NOT EXISTS character_episode(
             character_id INTEGER REFERENCES characters(id),
             episode_id INTEGER REFERENCES episodes(id),
             PRIMARY KEY (character_id, episode_id)
             )""")
 
-#adiciona os dados na tabela relacional
+#adiciona dados na tabela characters e na relacional
 for chars in characters:
-    character_id = chars["id"]
-    for ep_url in chars["episode"]:
-          ...
+    origin_id = chars["origin"]["url"].split("/")[-1] if chars["origin"]["url"] and chars["origin"]["url"].strip() != "" else None
+    location_id =chars["location"]["url"].split("/")[-1] if chars["origin"]["url"] and chars["location"]["url"].strip() != "" else None
 
+    cur.execute("""
+        INSERT INTO characters (
+            id, name, status, species, type, gender,
+            origin_id, location_id, image, url
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (id) DO NOTHING
+    """, (
+        chars["id"],
+        chars["name"],
+        chars["status"],
+        chars["species"],
+        chars["type"],
+        chars["gender"],
+        origin_id,
+        location_id,
+        chars["image"],
+        chars["url"],
+    ))
+
+    
+    character_id = chars["id"]
+    
+    for ep_url in chars["episode"]:
+        episode_id = ep_url.split("/")[-1]
+        cur.execute("""
+            INSERT INTO character_episode (character_id, episode_id)
+            VALUES (%s, %s)
+            ON CONFLICT DO NOTHING
+        """, (character_id, episode_id))
 
 
 conn.commit()
 cur.close()
 conn.close()
-
-        
-    
-
-
-
-# for chars in characters:
-#     cur.execute("""
-#             INSERT INTO charac """)""
-
-"""
-testando
-"""
